@@ -2,8 +2,16 @@
 
 Flutter plugin that sends ICMP ECHO_REQUEST.
 
-## Getting Started
+[![pub package](https://img.shields.io/pub/v/flutter_icmp_ping.svg)](https://pub.dartlang.org/packages/flutter_icmp_ping)
 
+
+## Supported platforms
+
+* Flutter Android
+* Flutter iOS
+
+
+## Getting Started
 
 To use this plugin, add `flutter_icmp_ping` as a [dependency in your pubspec.yaml file](https://flutter.io/platform-plugins/).
 
@@ -18,8 +26,8 @@ Import the library in your file.
 import 'package:flutter_icmp_ping/flutter_icmp_ping.dart';
 ````
 
-See the `example` directory for a complete sample app using GridButton.
-Or use the GridButton like below.
+See the `example` directory for a complete sample app using Ping.
+Or use the Ping like below.
 
 ````dart
 try {
