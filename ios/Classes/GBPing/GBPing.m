@@ -61,6 +61,7 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
     NSUInteger                                          _count;
     NSTimeInterval                                      _timeout;
     NSTimeInterval                                      _pingPeriod;
+    NSTimeInterval                                      _endTime;
 }
 
 #pragma mark - custom acc
@@ -400,9 +401,10 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
     if (bytesRead < 0) {
         err = errno;
     }
-    
+
     //process the data we read.
     if (bytesRead > 0) {
+        _endTime = CFAbsoluteTimeGetCurrent();
         struct sockaddr_in *sin = (struct sockaddr_in *)&addr;
         NSString *host = [self ntop:(struct sockaddr *)&addr len:addrLen];
 
@@ -498,6 +500,7 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
         self.counter = _count;
         BOOL stopping = NO;
         NSTimeInterval startTime = CFAbsoluteTimeGetCurrent();
+        _endTime = 0;
         while (self.isPinging) {
             [self sendPing];
           
@@ -523,7 +526,11 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
         [self stop];
         if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didFinishWithTime:)] ) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self.delegate ping:self didFinishWithTime:CFAbsoluteTimeGetCurrent() - startTime];
+                NSTimeInterval interval = 0;
+                if (self->_endTime > 0) {
+                    interval = self->_endTime - startTime;
+                }
+                [self.delegate ping:self didFinishWithTime:interval];
             });
         }
     }
