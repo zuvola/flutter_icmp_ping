@@ -603,6 +603,7 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
                                                                      target:[NSBlockOperation blockOperationWithBlock:^{
 
                                                                          newPingSummary.status = GBPingStatusFail;
+                                                                         self->_endTime = CFAbsoluteTimeGetCurrent();
 
                                                                          //notify about the failure
                                                                          if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didTimeoutWithSummary:)]) {
