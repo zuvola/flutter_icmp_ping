@@ -6,35 +6,34 @@ library flutter_icmp_ping;
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_icmp_ping/src/base_ping_stream.dart';
 import 'package:flutter_icmp_ping/src/models/ping_data.dart';
 import 'package:flutter_icmp_ping/src/ping_android.dart';
 import 'package:flutter_icmp_ping/src/ping_ios.dart';
 
+export 'package:flutter_icmp_ping/src/models/ping_data.dart';
+export 'package:flutter_icmp_ping/src/models/ping_error.dart';
+export 'package:flutter_icmp_ping/src/models/ping_response.dart';
+export 'package:flutter_icmp_ping/src/models/ping_summary.dart';
+
 class Ping {
-  /// Start sending ICMP ECHO_REQUEST to network hosts
+  Ping(String host, {int count, double interval, double timeout, bool ipv6}) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      _ping = PingiOS(host, count, interval, timeout, ipv6);
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      _ping = PingAndroid(host, count, interval, timeout, ipv6);
+    }
+  }
+
+  BasePing _ping;
+
+  /// On listen, start sending ICMP ECHO_REQUEST to network hosts
   ///
   /// Stop after sending [count] ECHO_REQUEST packets.
   /// Wait [interval] seconds between sending each packet.
   /// The [timeout] is the time to wait for a response, in seconds.
-  static Future<Stream<PingData>> start(String host,
-      {int count, double interval, double timeout, bool ipv6}) async {
-    print(defaultTargetPlatform);
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return PingiOS.start(host, count, interval, timeout, ipv6);
-    }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return PingAndroid.start(host, count, interval, timeout, ipv6);
-    }
-    return null;
-  }
+  Stream<PingData> get stream => _ping.stream;
 
-  /// Stop sending ECHO_REQUEST packets.
-  static Future<void> stop() async {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return PingiOS.stop();
-    }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return PingAndroid.stop();
-    }
-  }
+  void stop() => _ping.controller.close();
 }

@@ -3,12 +3,17 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:async/async.dart';
+import 'package:flutter_icmp_ping/src/base_ping_stream.dart';
 import 'package:flutter_icmp_ping/src/models/ping_data.dart';
 import 'package:flutter_icmp_ping/src/models/ping_error.dart';
 import 'package:flutter_icmp_ping/src/models/ping_response.dart';
 import 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
-class PingAndroid {
+class PingAndroid extends BasePing {
+  PingAndroid(
+      String host, int count, double interval, double timeout, bool ipv6)
+      : super(host, count, interval, timeout, ipv6);
+
   static final _resRegex =
       RegExp(r'from (.*): icmp_seq=(\d+) ttl=(\d+) time=((\d+).?(\d+))');
   static final _seqRegex = RegExp(r'icmp_seq=(\d+)');
@@ -17,7 +22,36 @@ class PingAndroid {
     RegExp(r'(\d+) received'),
     RegExp(r'time (\d+)ms'),
   ];
-  static Process _process;
+
+  Process _process;
+
+  @override
+  Future<void> onListen() async {
+    if (_process != null) {
+      throw Exception('ping is already running');
+    }
+    var params = ['-O', '-n'];
+    if (count != null) params.add('-c $count');
+    if (timeout != null) params.add('-W $timeout');
+    if (interval != null) params.add('-i $interval');
+    _process = await Process.start(
+        (ipv6 ?? false) ? 'ping6' : 'ping', [...params, host]);
+    _process.exitCode.then((value) {
+      controller.close();
+    });
+    subscription = StreamGroup.merge([_process.stderr, _process.stdout])
+        .transform(utf8.decoder)
+        .transform(LineSplitter())
+        .transform<PingData>(_androidTransformer)
+        .listen(addData);
+  }
+
+  @override
+  void onCancel() {
+    super.onCancel();
+    _process?.kill(ProcessSignal.sigint);
+    _process = null;
+  }
 
   /// StreamTransformer for Android response from process stdout/stderr.
   static StreamTransformer<String, PingData> _androidTransformer =
@@ -81,32 +115,4 @@ class PingAndroid {
       }
     },
   );
-
-  /// Start sending ICMP ECHO_REQUEST to network hosts
-  static Future<Stream<PingData>> start(String host, int count, double interval,
-      double timeout, bool ipv6) async {
-    if (_process != null) {
-      throw Exception('ping is already running');
-    }
-    var params = ['-O', '-n'];
-    if (count != null) params.add('-c $count');
-    if (timeout != null) params.add('-W $timeout');
-    if (interval != null) params.add('-i $interval');
-    _process = await Process.start(
-        (ipv6 ?? false) ? 'ping6' : 'ping', [...params, host]);
-    _process.exitCode.then((value) {
-      _process = null;
-    });
-    final stream = StreamGroup.merge([_process.stderr, _process.stdout]);
-    return stream
-        .transform(utf8.decoder)
-        .transform(LineSplitter())
-        .transform<PingData>(_androidTransformer);
-  }
-
-  /// Stop sending ECHO_REQUEST packets.
-  static Future<void> stop() async {
-    _process?.kill(ProcessSignal.sigint);
-    _process = null;
-  }
 }

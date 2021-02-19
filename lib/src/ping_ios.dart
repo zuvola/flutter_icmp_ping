@@ -1,15 +1,40 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_icmp_ping/src/base_ping_stream.dart';
 import 'package:flutter_icmp_ping/src/models/ping_data.dart';
 import 'package:flutter_icmp_ping/src/models/ping_error.dart';
 import 'package:flutter_icmp_ping/src/models/ping_response.dart';
 import 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
-class PingiOS {
+class PingiOS extends BasePing {
+  PingiOS(String host, int count, double interval, double timeout, bool ipv6)
+      : super(host, count, interval, timeout, ipv6);
+
   static const _channelName = 'flutter_icmp_ping';
   static const _methodCh = MethodChannel('$_channelName/method');
   static const _eventCh = EventChannel('$_channelName/event');
+
+  @override
+  Future<void> onListen() async {
+    await _methodCh.invokeMethod('start', {
+      'host': host,
+      'count': count,
+      'interval': interval,
+      'timeout': timeout,
+      'ipv6': ipv6,
+    });
+    subscription = _eventCh
+        .receiveBroadcastStream()
+        .transform<PingData>(_iosTransformer)
+        .listen(addData);
+  }
+
+  @override
+  void onCancel() {
+    super.onCancel();
+    _methodCh.invokeMethod('stop');
+  }
 
   /// StreamTransformer for iOS response from the event channel.
   static StreamTransformer<dynamic, PingData> _iosTransformer =
@@ -54,24 +79,4 @@ class PingiOS {
       );
     },
   );
-
-  /// Start sending ICMP ECHO_REQUEST to network hosts
-  static Future<Stream<PingData>> start(String host, int count, double interval,
-      double timeout, bool ipv6) async {
-    await _methodCh.invokeMethod('start', {
-      'host': host,
-      'count': count,
-      'interval': interval,
-      'timeout': timeout,
-      'ipv6': ipv6,
-    });
-    return _eventCh
-        .receiveBroadcastStream()
-        .transform<PingData>(_iosTransformer);
-  }
-
-  /// Stop sending ECHO_REQUEST packets.
-  static Future<void> stop() async {
-    return _methodCh.invokeMethod('stop');
-  }
 }
