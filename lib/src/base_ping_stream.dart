@@ -5,7 +5,7 @@ abstract class BasePing {
   BasePing(this.host, this.count, this.interval, this.timeout, this.ipv6) {
     controller = StreamController<PingData>(
         onListen: onListen,
-        onCancel: onCancel,
+        onCancel: _onCancel,
         onPause: () => subscription.pause,
         onResume: () => subscription.resume);
   }
@@ -22,10 +22,10 @@ abstract class BasePing {
 
   void onListen();
 
-  void onCancel() {
+  void _onCancel() {
     subscription.cancel();
     subscription = null;
   }
 
-  void addData(PingData data) => controller.add(data);
+  void stop() => controller.close();
 }

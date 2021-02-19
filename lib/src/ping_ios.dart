@@ -27,13 +27,13 @@ class PingiOS extends BasePing {
     subscription = _eventCh
         .receiveBroadcastStream()
         .transform<PingData>(_iosTransformer)
-        .listen(addData);
+        .listen(controller.add);
   }
 
   @override
-  void onCancel() {
-    super.onCancel();
+  void stop() {
     _methodCh.invokeMethod('stop');
+    super.stop();
   }
 
   /// StreamTransformer for iOS response from the event channel.

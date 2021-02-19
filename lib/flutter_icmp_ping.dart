@@ -35,5 +35,5 @@ class Ping {
   /// The [timeout] is the time to wait for a response, in seconds.
   Stream<PingData> get stream => _ping.stream;
 
-  void stop() => _ping.controller.close();
+  void stop() => _ping.stop();
 }

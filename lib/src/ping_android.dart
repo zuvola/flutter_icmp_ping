@@ -43,12 +43,11 @@ class PingAndroid extends BasePing {
         .transform(utf8.decoder)
         .transform(LineSplitter())
         .transform<PingData>(_androidTransformer)
-        .listen(addData);
+        .listen(controller.add);
   }
 
   @override
-  void onCancel() {
-    super.onCancel();
+  void stop() {
     _process?.kill(ProcessSignal.sigint);
     _process = null;
   }
