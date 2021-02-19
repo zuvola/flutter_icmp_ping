@@ -73,7 +73,7 @@ class PingAndroid extends BasePing {
           PingData(
             response: PingResponse(
               ip: match.group(1),
-              seq: int.parse(match.group(2)),
+              seq: int.parse(match.group(2)) - 1,
               ttl: int.parse(match.group(3)),
               time: Duration(
                   microseconds:
