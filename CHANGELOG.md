@@ -1,3 +1,6 @@
+## 1.1.1
+- Fixed end time and sequence when timeout.
+
 ## 1.1.0
 - Made iOS end time the same as Android.
 - Fixed Android "seq" to start from 0.
