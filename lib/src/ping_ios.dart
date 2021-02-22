@@ -32,8 +32,9 @@ class PingiOS extends BasePing {
 
   @override
   void stop() {
-    _methodCh.invokeMethod('stop');
-    super.stop();
+    _methodCh.invokeMethod('stop').then((_) {
+      super.stop();
+    });
   }
 
   /// StreamTransformer for iOS response from the event channel.
