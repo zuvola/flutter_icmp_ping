@@ -8,16 +8,18 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    Ping ping;
+
     void startPing() async {
       try {
-        final proc = await Ping.start(
+        ping = Ping(
           'google.com',
           count: 3,
           timeout: 1,
           interval: 1,
           ipv6: false,
         );
-        proc.listen((event) {
+        ping.stream.listen((event) {
           print(event);
         });
       } catch (e) {
@@ -40,7 +42,7 @@ class MyApp extends StatelessWidget {
               RaisedButton(
                 child: Text('stop'),
                 onPressed: () {
-                  Ping.stop();
+                  ping.stop();
                 },
               )
             ],
