@@ -1,3 +1,6 @@
+## 2.0.0+1
+- Fixed readme
+
 ## 2.0.0
 
 - Reorganized source files
