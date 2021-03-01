@@ -93,7 +93,7 @@ class PingAndroid extends BasePing {
         if (match == null) {
           return;
         }
-        final seq = match.group(2);
+        final seq = match.group(1);
         sink.add(
           PingData(
             response: PingResponse(
