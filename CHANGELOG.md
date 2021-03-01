@@ -1,3 +1,6 @@
+## 2.0.1
+- Fixed a bug that caused an exception when RequestTimedOut.
+
 ## 2.0.0+1
 - Fixed readme
 

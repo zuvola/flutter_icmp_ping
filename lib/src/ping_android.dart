@@ -89,7 +89,7 @@ class PingAndroid extends BasePing {
         sink.add(
           PingData(
             response: PingResponse(
-              seq: int.parse(match.group(2)) - 1,
+              seq: int.parse(match.group(1)) - 1,
             ),
             error: PingError.RequestTimedOut,
           ),
