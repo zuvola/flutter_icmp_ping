@@ -1,3 +1,6 @@
+## 3.0.0-nullsafety.1
+- Fixed a bug that caused an exception when RequestTimedOut.
+
 ## 3.0.0-nullsafety.0
 - Null safety migration
 
