@@ -35,11 +35,11 @@ class MyApp extends StatelessWidget {
         body: Center(
           child: Column(
             children: [
-              RaisedButton(
+              TextButton(
                 child: Text('start'),
                 onPressed: startPing,
               ),
-              RaisedButton(
+              TextButton(
                 child: Text('stop'),
                 onPressed: () {
                   ping.stop();
