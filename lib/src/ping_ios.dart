@@ -8,7 +8,8 @@ import 'package:flutter_icmp_ping/src/models/ping_response.dart';
 import 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
 class PingiOS extends BasePing {
-  PingiOS(String host, int? count, double? interval, double? timeout, bool? ipv6)
+  PingiOS(
+      String host, int? count, double? interval, double? timeout, bool? ipv6)
       : super(host, count, interval, timeout, ipv6);
 
   static const _channelName = 'flutter_icmp_ping';
@@ -18,6 +19,7 @@ class PingiOS extends BasePing {
   @override
   Future<void> onListen() async {
     await _methodCh.invokeMethod('start', {
+      'hash': this.hashCode,
       'host': host,
       'count': count,
       'interval': interval,
@@ -32,7 +34,9 @@ class PingiOS extends BasePing {
 
   @override
   void stop() {
-    _methodCh.invokeMethod('stop').then((_) {
+    _methodCh.invokeMethod('stop', {
+      'hash': this.hashCode,
+    }).then((_) {
       super.stop();
     });
   }

@@ -3,6 +3,7 @@ import UIKit
 
 public class SwiftFlutterIcmpPingPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
   private static let CHANNEL = "flutter_icmp_ping"
+  private var pings: [Int:GBPingHelper] = [:]
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "\(CHANNEL)/method", binaryMessenger: registrar.messenger())
@@ -13,12 +14,21 @@ public class SwiftFlutterIcmpPingPlugin: NSObject, FlutterPlugin, FlutterStreamH
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard let arguments = call.arguments as? [String: Any],
+          let hash = arguments["hash"] as? Int else {
+      result(FlutterError(code: "Invalid argument", message: nil, details: nil))
+      return
+    }
+    print("\(call.method):\(hash)")
+    var ping = pings[hash]
     switch call.method {
     case "stop":
-      print("stop")
-      GBPingHelper.stop()
+      ping?.stop()
     case "start":
-      print("start")
+      if ping == nil {
+        ping = GBPingHelper()
+        pings[hash] = ping
+      }
       guard let arguments = call.arguments as? [String: Any],
             let host = arguments["host"] as? String else {
         result(FlutterError(code: "Invalid argument", message: nil, details: nil))
@@ -27,10 +37,12 @@ public class SwiftFlutterIcmpPingPlugin: NSObject, FlutterPlugin, FlutterStreamH
       let count = arguments["count"] as? UInt ?? 0
       let interval = arguments["interval"] as? TimeInterval ?? 1
       let ipv6 = arguments["ipv6"] as? Bool ?? false
-      GBPingHelper.start(withHost: host, ipv4: !ipv6, ipv6: ipv6, count: count, interval: interval) { ret in
-        print(ret)
+      ping?.start(withHost: host, ipv4: !ipv6, ipv6: ipv6, count: count, interval: interval) { ret in
         if let sink = self.eventSink {
           sink(ret)
+        }
+        if ret["received"] != nil {
+          self.pings[hash] = nil
         }
       }
       result("started")
@@ -43,7 +55,6 @@ public class SwiftFlutterIcmpPingPlugin: NSObject, FlutterPlugin, FlutterStreamH
 
   public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
     eventSink = events
-    print(arguments ?? "?")
     return nil
   }
 
