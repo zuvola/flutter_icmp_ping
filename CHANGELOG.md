@@ -1,5 +1,11 @@
-## 2.0.1
+## 3.0.0
+- Fixed a bug related to simultaneous ping on iOS
+
+## 3.0.0-nullsafety.1
 - Fixed a bug that caused an exception when RequestTimedOut.
+
+## 3.0.0-nullsafety.0
+- Null safety migration
 
 ## 2.0.0+1
 - Fixed readme

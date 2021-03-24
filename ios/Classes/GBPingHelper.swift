@@ -7,12 +7,10 @@ import Foundation
 public typealias Handler = ((_ response: [String: Any]) -> Void)
 
 public class GBPingHelper: NSObject {
-  private static var ping: GBPing?
-  private static let delegate = PingDelegate()
+  private var ping: GBPing?
+  private let delegate = PingDelegate()
 
-  override private init() {}
-
-  static func start(withHost host: String, ipv4: Bool, ipv6: Bool, count: UInt, interval: TimeInterval, handler: @escaping Handler) {
+  func start(withHost host: String, ipv4: Bool, ipv6: Bool, count: UInt, interval: TimeInterval, handler: @escaping Handler) {
     ping?.stop()
     ping = GBPing()
     guard let ping = ping else {
@@ -36,14 +34,14 @@ public class GBPingHelper: NSObject {
         return
       }
       if success {
-        delegate.transmitted = 0
-        delegate.received = 0
+        self.delegate.transmitted = 0
+        self.delegate.received = 0
         ping.startPinging()
       }
     }
   }
 
-  static func stop() {
+  func stop() {
     ping?.stop()
   }
 }
@@ -57,7 +55,6 @@ private class PingDelegate: NSObject, GBPingDelegate {
     guard let handler = handler else {
       return
     }
-    print(summary)
     var ret: [String: Any] = [:]
     ret["seq"] = summary.sequenceNumber
     ret["host"] = summary.host

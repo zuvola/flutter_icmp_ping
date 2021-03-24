@@ -4,9 +4,9 @@ import 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
 /// Ping response data
 class PingData {
-  final PingResponse response;
-  final PingSummary summary;
-  final PingError error;
+  final PingResponse? response;
+  final PingSummary? summary;
+  final PingError? error;
 
   PingData({this.response, this.summary, this.error});
 

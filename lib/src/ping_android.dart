@@ -11,7 +11,7 @@ import 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
 class PingAndroid extends BasePing {
   PingAndroid(
-      String host, int count, double interval, double timeout, bool ipv6)
+      String host, int? count, double? interval, double? timeout, bool? ipv6)
       : super(host, count, interval, timeout, ipv6);
 
   static final _resRegex =
@@ -23,7 +23,7 @@ class PingAndroid extends BasePing {
     RegExp(r'time (\d+)ms'),
   ];
 
-  Process _process;
+  Process? _process;
 
   @override
   Future<void> onListen() async {
@@ -36,10 +36,13 @@ class PingAndroid extends BasePing {
     if (interval != null) params.add('-i $interval');
     _process = await Process.start(
         (ipv6 ?? false) ? 'ping6' : 'ping', [...params, host]);
-    _process.exitCode.then((value) {
+    if (_process == null) {
+      throw Exception('failed to start ping.');
+    }
+    _process?.exitCode.then((value) {
       controller.close();
     });
-    subscription = StreamGroup.merge([_process.stderr, _process.stdout])
+    subscription = StreamGroup.merge([_process!.stderr, _process!.stdout])
         .transform(utf8.decoder)
         .transform(LineSplitter())
         .transform<PingData>(_androidTransformer)
@@ -68,15 +71,19 @@ class PingAndroid extends BasePing {
         if (match == null) {
           return;
         }
+        final seq = match.group(2);
+        final ttl = match.group(3);
+        final time = match.group(4);
         sink.add(
           PingData(
             response: PingResponse(
               ip: match.group(1),
-              seq: int.parse(match.group(2)) - 1,
-              ttl: int.parse(match.group(3)),
-              time: Duration(
-                  microseconds:
-                      ((double.parse(match.group(4))) * 1000).floor()),
+              seq: seq == null ? null : int.parse(seq) - 1,
+              ttl: ttl == null ? null : int.parse(ttl),
+              time: time == null
+                  ? null
+                  : Duration(
+                      microseconds: ((double.parse(time)) * 1000).floor()),
             ),
           ),
         );
@@ -86,10 +93,11 @@ class PingAndroid extends BasePing {
         if (match == null) {
           return;
         }
+        final seq = match.group(1);
         sink.add(
           PingData(
             response: PingResponse(
-              seq: int.parse(match.group(1)) - 1,
+              seq: seq == null ? null : int.parse(seq) - 1,
             ),
             error: PingError.RequestTimedOut,
           ),
@@ -102,12 +110,17 @@ class PingAndroid extends BasePing {
         if (transmitted == null || received == null || time == null) {
           return;
         }
+        final group1 = transmitted.group(1);
+        final group2 = received.group(1);
+        final group3 = time.group(1);
         sink.add(
           PingData(
             summary: PingSummary(
-              transmitted: int.parse(transmitted.group(1)),
-              received: int.parse(received.group(1)),
-              time: Duration(milliseconds: int.parse(time.group(1))),
+              transmitted: group1 == null ? null : int.parse(group1),
+              received: group2 == null ? null : int.parse(group2),
+              time: group3 == null
+                  ? null
+                  : Duration(milliseconds: int.parse(group3)),
             ),
           ),
         );

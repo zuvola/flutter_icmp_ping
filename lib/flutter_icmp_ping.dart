@@ -17,7 +17,8 @@ export 'package:flutter_icmp_ping/src/models/ping_response.dart';
 export 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
 class Ping {
-  Ping(String host, {int count, double interval, double timeout, bool ipv6}) {
+  Ping(String host,
+      {int? count, double? interval, double? timeout, bool? ipv6}) {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       _ping = PingiOS(host, count, interval, timeout, ipv6);
     }
@@ -26,7 +27,7 @@ class Ping {
     }
   }
 
-  BasePing _ping;
+  late BasePing _ping;
 
   /// On listen, start sending ICMP ECHO_REQUEST to network hosts
   ///
