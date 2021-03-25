@@ -1,3 +1,6 @@
+## 3.0.1
+- Fixed a bug of simultaneous ping
+
 ## 3.0.0
 - Fixed a bug related to simultaneous ping on iOS
 

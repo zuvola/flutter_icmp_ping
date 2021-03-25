@@ -15,6 +15,7 @@ class PingiOS extends BasePing {
   static const _channelName = 'flutter_icmp_ping';
   static const _methodCh = MethodChannel('$_channelName/method');
   static const _eventCh = EventChannel('$_channelName/event');
+  static Map<int, StreamController<PingData>> controllers = {};
 
   @override
   Future<void> onListen() async {
@@ -26,10 +27,22 @@ class PingiOS extends BasePing {
       'timeout': timeout,
       'ipv6': ipv6,
     });
-    subscription = _eventCh
+    controllers[this.hashCode] = controller;
+    _eventCh
         .receiveBroadcastStream()
-        .transform<PingData>(_iosTransformer)
-        .listen(controller.add);
+        .transform<Map<int, PingData>>(_iosTransformer)
+        .listen((event) {
+      controllers.forEach((key, controller) {
+        final val = event[key];
+        if (val != null) {
+          controller.add(val);
+          if (val.summary != null) {
+            controller.close();
+          }
+        }
+      });
+      controllers.removeWhere((key, controller) => controller.isClosed);
+    });
   }
 
   @override
@@ -42,7 +55,7 @@ class PingiOS extends BasePing {
   }
 
   /// StreamTransformer for iOS response from the event channel.
-  static StreamTransformer<dynamic, PingData> _iosTransformer =
+  StreamTransformer<dynamic, Map<int, PingData>> _iosTransformer =
       StreamTransformer.fromHandlers(
     handleData: (data, sink) {
       var err;
@@ -75,13 +88,13 @@ class PingiOS extends BasePing {
                   (data['time'] * Duration.microsecondsPerSecond).floor()),
         );
       }
-      sink.add(
-        PingData(
+      sink.add({
+        data['hash']: PingData(
           response: response,
           summary: summary,
           error: err,
         ),
-      );
+      });
     },
   );
 }

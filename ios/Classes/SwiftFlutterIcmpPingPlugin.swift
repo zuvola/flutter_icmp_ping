@@ -39,7 +39,7 @@ public class SwiftFlutterIcmpPingPlugin: NSObject, FlutterPlugin, FlutterStreamH
       let ipv6 = arguments["ipv6"] as? Bool ?? false
       ping?.start(withHost: host, ipv4: !ipv6, ipv6: ipv6, count: count, interval: interval) { ret in
         if let sink = self.eventSink {
-          sink(ret)
+          sink(ret.merging(["hash": hash]) {(_,new) in new})
         }
         if ret["received"] != nil {
           self.pings[hash] = nil

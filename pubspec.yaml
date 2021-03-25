@@ -1,6 +1,6 @@
 name: flutter_icmp_ping
 description: Flutter plugin that sends ICMP ECHO_REQUEST to network hosts.
-version: 3.0.0
+version: 3.0.1
 homepage: https://github.com/zuvola/flutter_icmp_ping
 
 environment:
