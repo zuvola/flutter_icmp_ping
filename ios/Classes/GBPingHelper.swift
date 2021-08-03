@@ -10,7 +10,7 @@ public class GBPingHelper: NSObject {
   private var ping: GBPing?
   private let delegate = PingDelegate()
 
-  func start(withHost host: String, ipv4: Bool, ipv6: Bool, count: UInt, interval: TimeInterval, handler: @escaping Handler) {
+  func start(withHost host: String, ipv4: Bool, ipv6: Bool, count: UInt, interval: TimeInterval, timeout: TimeInterval, handler: @escaping Handler) {
     ping?.stop()
     ping = GBPing()
     guard let ping = ping else {
@@ -21,6 +21,7 @@ public class GBPingHelper: NSObject {
     ping.useIpv6 = ipv6
     ping.count = count
     ping.pingPeriod = interval
+    ping.timeout = timeout
 
     delegate.handler = handler
     ping.delegate = delegate
