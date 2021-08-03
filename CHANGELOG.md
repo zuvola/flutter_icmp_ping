@@ -1,3 +1,6 @@
+## 3.0.2
+- Fixed missing timeout argument on iOS
+
 ## 3.0.1
 - Fixed a bug of simultaneous ping
 
