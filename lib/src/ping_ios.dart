@@ -20,14 +20,14 @@ class PingiOS extends BasePing {
   @override
   Future<void> onListen() async {
     await _methodCh.invokeMethod('start', {
-      'hash': this.hashCode,
+      'hash': hashCode,
       'host': host,
       'count': count,
       'interval': interval,
       'timeout': timeout,
       'ipv6': ipv6,
     });
-    controllers[this.hashCode] = controller;
+    controllers[hashCode] = controller;
     _eventCh
         .receiveBroadcastStream()
         .transform<Map<int, PingData>>(_iosTransformer)
@@ -48,26 +48,26 @@ class PingiOS extends BasePing {
   @override
   void stop() {
     _methodCh.invokeMethod('stop', {
-      'hash': this.hashCode,
+      'hash': hashCode,
     }).then((_) {
       super.stop();
     });
   }
 
   /// StreamTransformer for iOS response from the event channel.
-  StreamTransformer<dynamic, Map<int, PingData>> _iosTransformer =
+  final StreamTransformer<dynamic, Map<int, PingData>> _iosTransformer =
       StreamTransformer.fromHandlers(
     handleData: (data, sink) {
-      var err;
+      PingError? err;
       switch (data['error']) {
         case 'RequestTimedOut':
-          err = PingError.RequestTimedOut;
+          err = PingError.requestTimedOut;
           break;
         case 'UnknownHost':
-          err = PingError.UnknownHost;
+          err = PingError.unknownHost;
           break;
       }
-      var response;
+      PingResponse? response;
       if (data['seq'] != null) {
         response = PingResponse(
           seq: data['seq'],
@@ -78,7 +78,7 @@ class PingiOS extends BasePing {
                   (data['time'] * Duration.microsecondsPerSecond).floor()),
         );
       }
-      var summary;
+      PingSummary? summary;
       if (data['received'] != null) {
         summary = PingSummary(
           received: data['received'],

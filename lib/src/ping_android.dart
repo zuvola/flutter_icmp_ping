@@ -44,7 +44,7 @@ class PingAndroid extends BasePing {
     });
     subscription = StreamGroup.merge([_process!.stderr, _process!.stdout])
         .transform(utf8.decoder)
-        .transform(LineSplitter())
+        .transform(const LineSplitter())
         .transform<PingData>(_androidTransformer)
         .listen(controller.add);
   }
@@ -56,13 +56,13 @@ class PingAndroid extends BasePing {
   }
 
   /// StreamTransformer for Android response from process stdout/stderr.
-  static StreamTransformer<String, PingData> _androidTransformer =
+  static final StreamTransformer<String, PingData> _androidTransformer =
       StreamTransformer.fromHandlers(
     handleData: (data, sink) {
       if (data.contains('unknown host')) {
         sink.add(
           PingData(
-            error: PingError.UnknownHost,
+            error: PingError.unknownHost,
           ),
         );
       }
@@ -99,7 +99,7 @@ class PingAndroid extends BasePing {
             response: PingResponse(
               seq: seq == null ? null : int.parse(seq) - 1,
             ),
-            error: PingError.RequestTimedOut,
+            error: PingError.requestTimedOut,
           ),
         );
       }
