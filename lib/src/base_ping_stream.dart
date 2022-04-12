@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter_icmp_ping/src/models/ping_data.dart';
 
 abstract class BasePing {
-  BasePing(this.host, this.count, this.interval, this.timeout, this.ipv6) {
+  BasePing(
+      this.host, this.count, this.interval, this.timeout, this.ipv6, this.ttl) {
     controller = StreamController<PingData>(
         onListen: onListen,
         onCancel: _onCancel,
@@ -15,6 +16,7 @@ abstract class BasePing {
   double? interval;
   double? timeout;
   bool? ipv6;
+  int? ttl;
   late StreamController<PingData> controller;
   StreamSubscription<PingData>? subscription;
 

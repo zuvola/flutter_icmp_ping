@@ -1,3 +1,6 @@
+## 3.1.0
+- Added ttl option
+
 ## 3.0.2
 - Fixed missing timeout argument on iOS
 

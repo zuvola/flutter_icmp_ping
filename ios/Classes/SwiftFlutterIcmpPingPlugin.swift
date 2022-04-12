@@ -38,7 +38,8 @@ public class SwiftFlutterIcmpPingPlugin: NSObject, FlutterPlugin, FlutterStreamH
       let interval = arguments["interval"] as? TimeInterval ?? 1
       let timeout = arguments["timeout"] as? TimeInterval ?? 2
       let ipv6 = arguments["ipv6"] as? Bool ?? false
-      ping?.start(withHost: host, ipv4: !ipv6, ipv6: ipv6, count: count, interval: interval, timeout: timeout) { ret in
+      let ttl = arguments["ttl"] as? UInt ?? 0
+      ping?.start(withHost: host, ipv4: !ipv6, ipv6: ipv6, count: count, interval: interval, timeout: timeout, ttl: ttl) { ret in
         if let sink = self.eventSink {
           sink(ret.merging(["hash": hash]) {(_,new) in new})
         }

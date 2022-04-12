@@ -16,10 +16,11 @@ class MyApp extends StatelessWidget {
       try {
         ping = Ping(
           'google.com',
-          count: 30,
+          count: 3,
           timeout: 1,
           interval: 1,
           ipv6: false,
+          ttl: 40,
         );
         ping!.stream.listen((event) {
           debugPrint(event.toString());

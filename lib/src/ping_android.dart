@@ -10,9 +10,9 @@ import 'package:flutter_icmp_ping/src/models/ping_response.dart';
 import 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
 class PingAndroid extends BasePing {
-  PingAndroid(
-      String host, int? count, double? interval, double? timeout, bool? ipv6)
-      : super(host, count, interval, timeout, ipv6);
+  PingAndroid(String host, int? count, double? interval, double? timeout,
+      bool? ipv6, int? ttl)
+      : super(host, count, interval, timeout, ipv6, ttl);
 
   static final _resRegex =
       RegExp(r'from (.*): icmp_seq=(\d+) ttl=(\d+) time=((\d+).?(\d+))');
@@ -34,6 +34,7 @@ class PingAndroid extends BasePing {
     if (count != null) params.add('-c $count');
     if (timeout != null) params.add('-W $timeout');
     if (interval != null) params.add('-i $interval');
+    if (ttl != null) params.add('-t $ttl');
     _process = await Process.start(
         (ipv6 ?? false) ? 'ping6' : 'ping', [...params, host]);
     if (_process == null) {

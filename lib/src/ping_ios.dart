@@ -8,9 +8,9 @@ import 'package:flutter_icmp_ping/src/models/ping_response.dart';
 import 'package:flutter_icmp_ping/src/models/ping_summary.dart';
 
 class PingiOS extends BasePing {
-  PingiOS(
-      String host, int? count, double? interval, double? timeout, bool? ipv6)
-      : super(host, count, interval, timeout, ipv6);
+  PingiOS(String host, int? count, double? interval, double? timeout,
+      bool? ipv6, int? ttl)
+      : super(host, count, interval, timeout, ipv6, ttl);
 
   static const _channelName = 'flutter_icmp_ping';
   static const _methodCh = MethodChannel('$_channelName/method');
@@ -26,6 +26,7 @@ class PingiOS extends BasePing {
       'interval': interval,
       'timeout': timeout,
       'ipv6': ipv6,
+      'ttl': ttl,
     });
     controllers[hashCode] = controller;
     _eventCh

@@ -35,6 +35,7 @@ try {
     timeout: 1,
     interval: 1,
     ipv6: false,
+    ttl: 40,
   );
   ping.stream.listen((event) {
     print(event);
