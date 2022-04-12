@@ -2,28 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_icmp_ping/flutter_icmp_ping.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    Ping ping;
+    Ping? ping;
 
     void startPing() async {
       try {
         ping = Ping(
           'google.com',
-          count: 3,
+          count: 30,
           timeout: 1,
           interval: 1,
           ipv6: false,
         );
-        ping.stream.listen((event) {
-          print(event);
+        ping!.stream.listen((event) {
+          debugPrint(event.toString());
         });
       } catch (e) {
-        print('error $e');
+        debugPrint('error $e');
       }
     }
 
@@ -36,13 +38,13 @@ class MyApp extends StatelessWidget {
           child: Column(
             children: [
               TextButton(
-                child: Text('start'),
+                child: const Text('start'),
                 onPressed: startPing,
               ),
               TextButton(
-                child: Text('stop'),
+                child: const Text('stop'),
                 onPressed: () {
-                  ping.stop();
+                  ping?.stop();
                 },
               )
             ],
