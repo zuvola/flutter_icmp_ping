@@ -19,15 +19,6 @@ class PingiOS extends BasePing {
 
   @override
   Future<void> onListen() async {
-    await _methodCh.invokeMethod('start', {
-      'hash': hashCode,
-      'host': host,
-      'count': count,
-      'interval': interval,
-      'timeout': timeout,
-      'ipv6': ipv6,
-      'ttl': ttl,
-    });
     controllers[hashCode] = controller;
     _eventCh
         .receiveBroadcastStream()
@@ -43,6 +34,15 @@ class PingiOS extends BasePing {
         }
       });
       controllers.removeWhere((key, controller) => controller.isClosed);
+    });
+    await _methodCh.invokeMethod('start', {
+      'hash': hashCode,
+      'host': host,
+      'count': count,
+      'interval': interval,
+      'timeout': timeout,
+      'ipv6': ipv6,
+      'ttl': ttl,
     });
   }
 
