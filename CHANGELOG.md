@@ -1,3 +1,6 @@
+## 3.1.1
+- Fixed a case where events could not be retrieved when offline
+  
 ## 3.1.0
 - Added ttl option
 
