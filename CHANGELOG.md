@@ -1,3 +1,6 @@
+## 3.1.2
+- support iOS native call GBPing
+
 ## 3.1.1
 - Fixed a case where events could not be retrieved when offline
   
