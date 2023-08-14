@@ -933,12 +933,13 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 }
 
 - (sa_family_t)hostAddressFamily {
-    sa_family_t     result;
-    
-    result = AF_UNSPEC;
-    if ( (self.hostAddress != nil) && (self.hostAddress.length >= sizeof(struct sockaddr)) ) {
-        result = ((const struct sockaddr *) self.hostAddress.bytes)->sa_family;
+    sa_family_t result = AF_UNSPEC;
+    // Save a reference to a local variable, avoid crash when hostAddress is release by other thread.
+    NSData *hostAddress = self.hostAddress; 
+    if (hostAddress != nil && hostAddress.length >= sizeof(struct sockaddr)) {
+        result = ((const struct sockaddr *)hostAddress.bytes)->sa_family;
     }
+    
     return result;
 }
 
