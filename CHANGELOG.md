@@ -1,5 +1,6 @@
 ## 3.1.3
-- fix occasional GBPing get hostAddressFamily crash issue
+- fix GBPing occasional crash under multi-threading.
+- 
 
 ## 3.1.2
 - support iOS native call GBPing
