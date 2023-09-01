@@ -60,6 +60,13 @@ class PingAndroid extends BasePing {
   static final StreamTransformer<String, PingData> _androidTransformer =
       StreamTransformer.fromHandlers(
     handleData: (data, sink) {
+      if (data.contains('unreachable')) {
+        sink.add(
+          PingData(
+            error: PingError.unreachable,
+          ),
+        );
+      }
       if (data.contains('unknown host')) {
         sink.add(
           PingData(
