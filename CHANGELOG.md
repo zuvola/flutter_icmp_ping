@@ -1,6 +1,6 @@
 ## 3.1.3
 - fix GBPing occasional crash under multi-threading.
-- 
+- fix to work on android.
 
 ## 3.1.2
 - support iOS native call GBPing
