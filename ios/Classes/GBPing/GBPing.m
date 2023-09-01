@@ -217,8 +217,10 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
     
     //set up data structs
     self.nextSequenceNumber = 0;
-    self.pendingPings = [[NSMutableDictionary alloc] init];
-    self.timeoutTimers = [[NSMutableDictionary alloc] init];
+    @synchronized (self) {
+        self.pendingPings = [[NSMutableDictionary alloc] init];
+        self.timeoutTimers = [[NSMutableDictionary alloc] init];
+    }
     
     dispatch_async(self.setupQueue, ^{
         CFStreamError streamError;
@@ -982,8 +984,10 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 -(void)dealloc {
     self.delegate = nil;
     self.host = nil;
-    self.timeoutTimers = nil;
-    self.pendingPings = nil;
+    @synchronized (self) {
+        self.timeoutTimers = nil;
+        self.pendingPings = nil;
+    }
     self.hostAddress = nil;
     
     //clean up socket to be sure
