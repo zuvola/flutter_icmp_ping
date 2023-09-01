@@ -217,8 +217,10 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
     
     //set up data structs
     self.nextSequenceNumber = 0;
-    self.pendingPings = [[NSMutableDictionary alloc] init];
-    self.timeoutTimers = [[NSMutableDictionary alloc] init];
+    @synchronized (self) {
+        self.pendingPings = [[NSMutableDictionary alloc] init];
+        self.timeoutTimers = [[NSMutableDictionary alloc] init];
+    }
     
     dispatch_async(self.setupQueue, ^{
         CFStreamError streamError;
@@ -430,7 +432,10 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
             
             NSUInteger seqNo = (NSUInteger)OSSwapBigToHostInt16(headerPointer->sequenceNumber);
             NSNumber *key = @(seqNo);
-            GBPingSummary *pingSummary = [(GBPingSummary *)self.pendingPings[key] copy];
+            GBPingSummary *pingSummary;
+            @synchronized (self) {
+                pingSummary = [(GBPingSummary *)self.pendingPings[key] copy];
+            }
 
             if (pingSummary) {
                 if ([self isValidPingResponsePacket:packet]) {
@@ -447,26 +452,27 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
                     pingSummary.status = GBPingStatusSuccess;
 
                     //invalidate the timeouttimer
-                    NSTimer *timer = self.timeoutTimers[key];
-                    [timer invalidate];
-                    [self.timeoutTimers removeObjectForKey:key];
-
-
-                    if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didReceiveReplyWithSummary:)] ) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            //notify delegate
-                            [self.delegate ping:self didReceiveReplyWithSummary:[pingSummary copy]];
-                        });
+                    @synchronized (self) {
+                        NSTimer *timer = self.timeoutTimers[key];
+                        [timer invalidate];
+                        [self.timeoutTimers removeObjectForKey:key];
                     }
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        //notify delegate
+                        if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didReceiveReplyWithSummary:)] ) {
+                            [self.delegate ping:self didReceiveReplyWithSummary:[pingSummary copy]];
+                        }
+                    });
                 }
                 else {
                     pingSummary.status = GBPingStatusFail;
-
-                    if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didReceiveUnexpectedReplyWithSummary:)] ) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didReceiveUnexpectedReplyWithSummary:)] ) {
                             [self.delegate ping:self didReceiveUnexpectedReplyWithSummary:[pingSummary copy]];
-                        });
-                    }
+                        }
+                    });
                 }
             }
         }
@@ -480,11 +486,11 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
         
         @synchronized(self) {
             if (!self.isStopped) {
-                if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didFailWithError:)] ) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didFailWithError:)] ) {
                         [self.delegate ping:self didFailWithError:[NSError errorWithDomain:NSPOSIXErrorDomain code:err userInfo:nil]];
-                    });
-                }
+                    }
+                });
             }
         }
         
@@ -524,15 +530,15 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
             }
         }
         [self stop];
-        if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didFinishWithTime:)] ) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didFinishWithTime:)] ) {
                 NSTimeInterval interval = 0;
                 if (self->_endTime > 0) {
                     interval = self->_endTime - startTime;
                 }
                 [self.delegate ping:self didFinishWithTime:interval];
-            });
-        }
+            }
+        });
     }
 }
 
@@ -583,7 +589,9 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
             
             //add it to pending pings
             NSNumber *key = @(self.nextSequenceNumber);
-            self.pendingPings[key] = newPingSummary;
+            @synchronized (self) {
+                self.pendingPings[key] = newPingSummary;
+            }
             
             //increment sequence number
             self.nextSequenceNumber += 1;
@@ -594,7 +602,9 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
             //we need to clean up our list of pending pings, and we do that after the timeout has elapsed (+ some grace period)
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((self.timeout + kPendingPingsCleanupGrace) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 //remove the ping from the pending list
-                [self.pendingPings removeObjectForKey:key];
+                @synchronized (self) {
+                    [self.pendingPings removeObjectForKey:key];
+                }
             });
             
             //add a timeout timer
@@ -606,15 +616,17 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
                                                                          self->_endTime = CFAbsoluteTimeGetCurrent();
 
                                                                          //notify about the failure
-                                                                         if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didTimeoutWithSummary:)]) {
-                                                                             dispatch_async(dispatch_get_main_queue(), ^{
+                                                                         dispatch_async(dispatch_get_main_queue(), ^{
+                                                                             if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didTimeoutWithSummary:)]) {
                                                                                  [self.delegate ping:self didTimeoutWithSummary:pingSummaryCopy];
-                                                                             });
-                                                                         }
+                                                                             }
+                                                                         });
 
                                                                          //remove the timer itself from the timers list
                                                                          //lm make sure that the timer list doesnt grow and these removals actually work... try logging the count of the timeoutTimers when stopping the pinger
-                                                                         [self.timeoutTimers removeObjectForKey:key];
+                                                                         @synchronized (self) {
+                                                                             [self.timeoutTimers removeObjectForKey:key];
+                                                                         }
                                                                      }]
                                                                    selector:@selector(main)
                                                                    userInfo:nil
@@ -623,15 +635,17 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
             
             //keep a local ref to it
             if (self.timeoutTimers) {
-                self.timeoutTimers[key] = timeoutTimer;
+                @synchronized (self) {
+                    self.timeoutTimers[key] = timeoutTimer;
+                }
             }
             
             //notify delegate about this
-            if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didSendPingWithSummary:)]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didSendPingWithSummary:)]) {
                     [self.delegate ping:self didSendPingWithSummary:pingSummaryCopy];
-                });
-            }
+                }
+            });
             
             bytesSent = sendto(
                                self.socket,
@@ -671,11 +685,11 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
             GBPingSummary *pingSummaryCopyAfterFailure = [newPingSummary copy];
             
             //notify delegate
-            if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didFailToSendPingWithSummary:error:)]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (self.delegate && [self.delegate respondsToSelector:@selector(ping:didFailToSendPingWithSummary:error:)]) {
                     [self.delegate ping:self didFailToSendPingWithSummary:pingSummaryCopyAfterFailure error:[NSError errorWithDomain:NSPOSIXErrorDomain code:err userInfo:nil]];
-                });
-            }
+                }
+            });
         }
     }
 }
@@ -933,12 +947,13 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 }
 
 - (sa_family_t)hostAddressFamily {
-    sa_family_t     result;
-    
-    result = AF_UNSPEC;
-    if ( (self.hostAddress != nil) && (self.hostAddress.length >= sizeof(struct sockaddr)) ) {
-        result = ((const struct sockaddr *) self.hostAddress.bytes)->sa_family;
+    sa_family_t result = AF_UNSPEC;
+    // Save a reference to a local variable, avoid crash when hostAddress is release by other thread.
+    NSData *hostAddress = self.hostAddress; 
+    if (hostAddress != nil && hostAddress.length >= sizeof(struct sockaddr)) {
+        result = ((const struct sockaddr *)hostAddress.bytes)->sa_family;
     }
+    
     return result;
 }
 
@@ -969,8 +984,10 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 -(void)dealloc {
     self.delegate = nil;
     self.host = nil;
-    self.timeoutTimers = nil;
-    self.pendingPings = nil;
+    @synchronized (self) {
+        self.timeoutTimers = nil;
+        self.pendingPings = nil;
+    }
     self.hostAddress = nil;
     
     //clean up socket to be sure
