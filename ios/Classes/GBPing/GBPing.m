@@ -430,7 +430,10 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
             
             NSUInteger seqNo = (NSUInteger)OSSwapBigToHostInt16(headerPointer->sequenceNumber);
             NSNumber *key = @(seqNo);
-            GBPingSummary *pingSummary = [(GBPingSummary *)self.pendingPings[key] copy];
+            GBPingSummary *pingSummary;
+            @synchronized (self) {
+                pingSummary = [(GBPingSummary *)self.pendingPings[key] copy];
+            }
 
             if (pingSummary) {
                 if ([self isValidPingResponsePacket:packet]) {
@@ -447,9 +450,9 @@ static NSTimeInterval const kDefaultTimeout =           2.0;
                     pingSummary.status = GBPingStatusSuccess;
 
                     //invalidate the timeouttimer
-                    NSTimer *timer = self.timeoutTimers[key];
-                    [timer invalidate];
                     @synchronized (self) {
+                        NSTimer *timer = self.timeoutTimers[key];
+                        [timer invalidate];
                         [self.timeoutTimers removeObjectForKey:key];
                     }
                     
